@@ -12,30 +12,7 @@ const generateToken = (id) => {
 // ============================================================
 // Helper: Generate token, set HttpOnly cookie, send response
 // ============================================================
-// const sendTokenResponse = (user, statusCode, res) => {
-//   const token = generateToken(user._id);
 
-//   const options = {
-//     expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-//     httpOnly: true,
-//     secure: process.env.NODE_ENV === 'production',
-//     sameSite: 'strict',
-//   };
-
-//   user.password = undefined;
-
-//   res
-//     .status(statusCode)
-//     .cookie('token', token, options)
-//     .json({
-//       _id: user._id,
-//       name: user.name,
-//       email: user.email,
-//       phone: user.phone,
-//       district: user.district,
-//       role: user.role,
-//     });
-// };
 
 const sendTokenResponse = (user, statusCode, res) => {
   const token = generateToken(user._id);
@@ -45,8 +22,8 @@ const sendTokenResponse = (user, statusCode, res) => {
   const options = {
     expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
     httpOnly: true,
-    secure: isProduction,                        // ✅ HTTPS only on Render
-    sameSite: isProduction ? 'None' : 'Lax',    // ✅ 'None' allows cross-domain cookies
+    secure: isProduction,                      
+    sameSite: isProduction ? 'None' : 'Lax',  // ← Capital N in 'None'
   };
 
   user.password = undefined;
@@ -54,14 +31,7 @@ const sendTokenResponse = (user, statusCode, res) => {
   res
     .status(statusCode)
     .cookie('token', token, options)
-    .json({
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      phone: user.phone,
-      district: user.district,
-      role: user.role,
-    });
+    .json({ ... });
 };
 
 // ============================================================

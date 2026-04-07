@@ -16,7 +16,7 @@ const sendTokenResponse = (user, statusCode, res) => {
   const token = generateToken(user._id);
 
   const options = {
-    expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+    expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict',
@@ -45,24 +45,22 @@ export const register = async (req, res) => {
   try {
     const { name, email, phone, district, password } = req.body;
 
-    // 1. Check if user already exists
     const userExists = await User.findOne({ email });
     if (userExists) {
       return res.status(400).json({ message: 'User already exists' });
     }
 
-    // 2. SECURITY FIX: Always force role to 'farmer' on self-registration
-    //    Admins must be created via a seeder script or a separate protected route
+    // SECURITY: Always force role to 'farmer' on self-registration.
+    // Admins must be created via a seeder script or a separate protected route.
     const user = await User.create({
       name,
       email,
       phone,
       district,
       password,
-      role: 'farmer', // Never trust role from request body
+      role: 'farmer',
     });
 
-    // 3. Send Response with Cookie
     sendTokenResponse(user, 201, res);
   } catch (error) {
     console.error('Register Error:', error);
@@ -124,26 +122,32 @@ export const getMe = async (req, res) => {
 // ============================================================
 // @desc    Update user profile (name, phone, district)
 // @route   PUT /api/auth/profile
+// FIX: Explicitly allowlist updatable fields. This prevents a
+// user from escalating their role or changing their email by
+// injecting extra fields in the request body.
 // ============================================================
 export const updateProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
-
     if (!user) return res.status(404).json({ message: 'User not found' });
 
-    user.name = req.body.name || user.name;
-    user.phone = req.body.phone || user.phone;
-    user.district = req.body.district || user.district;
+    // Only these three fields are allowed to change via this route.
+    // email and role are intentionally excluded.
+    const { name, phone, district } = req.body;
+
+    if (name)     user.name     = name;
+    if (phone)    user.phone    = phone;
+    if (district) user.district = district;
 
     const updatedUser = await user.save();
 
     res.json({
-      _id: updatedUser._id,
-      name: updatedUser.name,
-      email: updatedUser.email,
-      phone: updatedUser.phone,
+      _id:      updatedUser._id,
+      name:     updatedUser.name,
+      email:    updatedUser.email,
+      phone:    updatedUser.phone,
       district: updatedUser.district,
-      role: updatedUser.role,
+      role:     updatedUser.role,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -152,7 +156,8 @@ export const updateProfile = async (req, res) => {
 
 // ============================================================
 // @desc    Change password
-// @route   PUT /api/auth/change-password   ← NEW
+// @route   PUT /api/auth/change-password
+// FIX: Added minimum password length validation.
 // ============================================================
 export const changePassword = async (req, res) => {
   try {
@@ -160,6 +165,11 @@ export const changePassword = async (req, res) => {
 
     if (!currentPassword || !newPassword) {
       return res.status(400).json({ message: 'Please provide current and new password' });
+    }
+
+    // FIX: Enforce a minimum password length before hashing
+    if (newPassword.length < 8) {
+      return res.status(400).json({ message: 'New password must be at least 8 characters long' });
     }
 
     const user = await User.findById(req.user.id);

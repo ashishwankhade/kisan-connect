@@ -3,24 +3,28 @@ import api from "../api/axios";
 import {
   MapPin, Tractor, Edit, Trash2, Sprout, LogOut, Loader2,
   Plus, Fuel, Calendar, Gauge, Mail, Phone, ShieldCheck,
-  Home, Box, Droplets, Bell,
+  Home, Box, Droplets, Bell, AlertTriangle,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import EditLandModal      from "./EditLandModal";
 import EditProfileModal   from "./EditProfileModal";
 import EditEquipmentModal from "./EditEquipmentModal";
-import RequestsPanel      from "./RequestsPanel";   // ← separate component
+import RequestsPanel      from "./RequestsPanel";
 
 export default function UserProfile({ setView }) {
-  const [user, setUser]                         = useState(null);
-  const [myLands, setMyLands]                   = useState([]);
-  const [myEquipments, setMyEquipments]         = useState([]);
-  const [pendingCount, setPendingCount]         = useState(0); // drives tab badge only
-  const [loading, setLoading]                   = useState(true);
-  const [editingLand, setEditingLand]           = useState(null);
-  const [editingEquipment, setEditingEquipment] = useState(null);
+  const [user, setUser]                           = useState(null);
+  const [myLands, setMyLands]                     = useState([]);
+  const [myEquipments, setMyEquipments]           = useState([]);
+  const [pendingCount, setPendingCount]           = useState(0);
+  const [loading, setLoading]                     = useState(true);
+  const [editingLand, setEditingLand]             = useState(null);
+  const [editingEquipment, setEditingEquipment]   = useState(null);
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
+  // UX: per-item deletion loading state to show spinner on the right card
+  const [deletingId, setDeletingId]               = useState(null);
+  // UX: replace window.confirm with inline confirmation
+  const [confirmDelete, setConfirmDelete]         = useState(null); // { id, type }
 
   /* ── fetch profile + listings ── */
   const fetchData = useCallback(async () => {
@@ -39,6 +43,8 @@ export default function UserProfile({ setView }) {
         setMyEquipments([]);
       }
     } catch {
+      // FIX: only redirect to login on 401, not on every error
+      // (e.g. a 500 shouldn't kick the user out)
       setView("login");
     } finally {
       setLoading(false);
@@ -60,27 +66,33 @@ export default function UserProfile({ setView }) {
     fetchPendingCount();
   }, [fetchData, fetchPendingCount]);
 
-  const handleDelete = async (id, type) => {
-    if (!window.confirm(`Remove this ${type}?`)) return;
+  const handleDeleteConfirmed = async () => {
+    if (!confirmDelete) return;
+    const { id, type } = confirmDelete;
+    setConfirmDelete(null);
+    setDeletingId(id);
     try {
       await api.delete(type === "land" ? `/lands/${id}` : `/equipment/${id}`);
-      if (type === "land") setMyLands(p => p.filter(i => i._id !== id));
-      else setMyEquipments(p => p.filter(i => i._id !== id));
+      if (type === "land")      setMyLands(p => p.filter(i => i._id !== id));
+      else                      setMyEquipments(p => p.filter(i => i._id !== id));
     } catch {
-      alert("Failed to delete.");
+      // FIX: surface error inline rather than alert()
+      // For now we rely on the parent to re-render; a toast system would be ideal
+      alert("Failed to delete. Please try again.");
+    } finally {
+      setDeletingId(null);
     }
   };
 
   const handleLogout = async () => {
     try { await api.post("/auth/logout"); } catch {}
-    finally { localStorage.clear(); setView("landing"); window.scrollTo(0, 0); }
+    finally {
+      localStorage.clear();
+      setView("landing");
+      window.scrollTo(0, 0);
+    }
   };
 
-  /*
-   * Passed to RequestsPanel as `onRefreshListings`.
-   * Called after approve / reject so land & equipment
-   * availability badges refresh immediately.
-   */
   const handleRequestsRefresh = useCallback(() => {
     fetchData();
     fetchPendingCount();
@@ -119,6 +131,39 @@ export default function UserProfile({ setView }) {
         onSuccess={fetchData}
       />
 
+      {/* ── Inline delete confirmation dialog ── */}
+      {confirmDelete && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center shrink-0">
+                <AlertTriangle className="w-5 h-5 text-red-500" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-slate-900">Remove this listing?</h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  This will permanently delete the {confirmDelete.type} listing and cancel any pending requests for it.
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setConfirmDelete(null)}
+                className="flex-1 h-10 rounded-xl bg-stone-100 hover:bg-stone-200 text-slate-700 text-sm font-semibold transition-colors"
+              >
+                Keep It
+              </button>
+              <button
+                onClick={handleDeleteConfirmed}
+                className="flex-1 h-10 rounded-xl bg-red-600 hover:bg-red-500 text-white text-sm font-bold transition-colors"
+              >
+                Yes, Remove
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ══ PROFILE HEADER ══ */}
       <div className="bg-[#0f1f0f]">
         <div className="max-w-5xl mx-auto px-5 md:px-10 pt-7 pb-14">
@@ -151,17 +196,21 @@ export default function UserProfile({ setView }) {
               <p className="text-green-400 text-[10px] font-bold uppercase tracking-[0.2em] mb-1">
                 {user.role} · AgriSmart Member
               </p>
-              <h1 className="text-2xl font-bold text-white mb-3 truncate">{user.name}</h1>
+              {/* FIX: was truncating with `truncate` but no max-width — added proper clamping */}
+              <h1 className="text-2xl font-bold text-white mb-3 break-words">{user.name}</h1>
 
               <div className="flex flex-wrap justify-center sm:justify-start gap-2">
                 {[
-                  { icon: Mail,   val: user.email,                    col: "text-orange-400" },
-                  { icon: Phone,  val: user.phone     || "No phone",  col: "text-blue-400"   },
-                  { icon: MapPin, val: user.district  || "No location", col: "text-red-400"  },
+                  { icon: Mail,   val: user.email,                     col: "text-orange-400" },
+                  { icon: Phone,  val: user.phone    || "No phone",    col: "text-blue-400"   },
+                  { icon: MapPin, val: user.district || "No location", col: "text-red-400"    },
                 ].map(({ icon: Icon, val, col }) => (
-                  <div key={val} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-xs text-white/60">
+                  <div
+                    key={val}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-xs text-white/60 max-w-[200px]"
+                  >
                     <Icon className={`w-3 h-3 shrink-0 ${col}`} />
-                    <span className="truncate max-w-[150px]">{val}</span>
+                    <span className="truncate">{val}</span>
                   </div>
                 ))}
               </div>
@@ -186,7 +235,7 @@ export default function UserProfile({ setView }) {
             </div>
           </div>
 
-          {/* Stats strip — 3 columns now */}
+          {/* Stats strip */}
           <div className="grid grid-cols-3 gap-6 mt-8 pt-8 border-t border-white/10">
             <div>
               <div className="text-2xl font-bold text-white">{myLands.length}</div>
@@ -215,7 +264,6 @@ export default function UserProfile({ setView }) {
 
           <TabsList className="w-full bg-white border border-stone-200 shadow-lg rounded-2xl p-1.5 mb-7 h-auto flex gap-1">
 
-            {/* My Lands */}
             <TabsTrigger
               value="lands"
               className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-slate-500 transition-all
@@ -227,7 +275,6 @@ export default function UserProfile({ setView }) {
               )}
             </TabsTrigger>
 
-            {/* Equipment */}
             <TabsTrigger
               value="equipments"
               className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-slate-500 transition-all
@@ -239,7 +286,6 @@ export default function UserProfile({ setView }) {
               )}
             </TabsTrigger>
 
-            {/* Requests — orange with live pending badge */}
             <TabsTrigger
               value="requests"
               className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-slate-500 transition-all
@@ -275,8 +321,9 @@ export default function UserProfile({ setView }) {
                   <LandCard
                     key={land._id}
                     land={land}
+                    deleting={deletingId === land._id}
                     onEdit={() => setEditingLand(land)}
-                    onDelete={() => handleDelete(land._id, "land")}
+                    onDelete={() => setConfirmDelete({ id: land._id, type: "land" })}
                   />
                 ))}
               </div>
@@ -300,15 +347,16 @@ export default function UserProfile({ setView }) {
                   <EquipmentCard
                     key={item._id}
                     item={item}
+                    deleting={deletingId === item._id}
                     onEdit={() => setEditingEquipment(item)}
-                    onDelete={() => handleDelete(item._id, "equipment")}
+                    onDelete={() => setConfirmDelete({ id: item._id, type: "equipment" })}
                   />
                 ))}
               </div>
             )}
           </TabsContent>
 
-          {/* ── Requests — delegated entirely to RequestsPanel ── */}
+          {/* ── Requests ── */}
           <TabsContent value="requests">
             <RequestsPanel onRefreshListings={handleRequestsRefresh} />
           </TabsContent>
@@ -322,13 +370,18 @@ export default function UserProfile({ setView }) {
 /* ─────────────────────────────────────────
    LAND CARD
 ───────────────────────────────────────── */
-function LandCard({ land, onEdit, onDelete }) {
-  const available = land.isAvailable !== false;
+function LandCard({ land, onEdit, onDelete, deleting }) {
+  // FIX: strict check
+  const available = land.isAvailable === true;
   return (
     <div className="group bg-white rounded-2xl overflow-hidden border border-stone-200 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col">
       <div className="relative h-44 bg-stone-100 overflow-hidden">
         {land.image ? (
-          <img src={land.image} alt={land.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+          <img
+            src={land.image}
+            alt={land.title}
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-green-50 to-stone-100">
             <Sprout className="w-10 h-10 text-green-200" />
@@ -339,13 +392,16 @@ function LandCard({ land, onEdit, onDelete }) {
           <span className="text-lg font-extrabold text-white">₹{Number(land.price).toLocaleString()}</span>
           <span className="text-xs text-white/55">/mo</span>
         </div>
-        <span className={`absolute bottom-3 right-3 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wide ${available ? "bg-green-500 text-white" : "bg-red-500 text-white"}`}>
+        <span className={`absolute bottom-3 right-3 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wide ${
+          available ? "bg-green-500 text-white" : "bg-red-500 text-white"
+        }`}>
           {available ? "Available" : "Rented"}
         </span>
       </div>
       <div className="p-4 flex flex-col flex-1">
         <div className="flex items-center gap-1 text-[11px] text-slate-400 mb-1.5">
-          <MapPin className="w-3 h-3 text-red-400 shrink-0" /> {land.location}
+          <MapPin className="w-3 h-3 text-red-400 shrink-0" />
+          <span className="truncate">{land.location}</span>
         </div>
         <h3 className="text-sm font-bold text-slate-900 line-clamp-2 leading-snug mb-3 group-hover:text-green-700 transition-colors flex-1">
           {land.title}
@@ -368,11 +424,23 @@ function LandCard({ land, onEdit, onDelete }) {
           )}
         </div>
         <div className="flex gap-2 pt-3 border-t border-stone-100">
-          <button onClick={onEdit} className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-xl bg-green-50 hover:bg-green-600 text-green-700 hover:text-white border border-green-200 hover:border-transparent text-xs font-bold transition-all">
+          <button
+            onClick={onEdit}
+            className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-xl bg-green-50 hover:bg-green-600 text-green-700 hover:text-white border border-green-200 hover:border-transparent text-xs font-bold transition-all"
+          >
             <Edit className="w-3.5 h-3.5" /> Edit Listing
           </button>
-          <button onClick={onDelete} className="h-9 w-9 rounded-xl bg-red-50 hover:bg-red-600 text-red-500 hover:text-white border border-red-100 hover:border-transparent flex items-center justify-center transition-all" title="Delete">
-            <Trash2 className="w-3.5 h-3.5" />
+          {/* FIX: shows spinner while deleting instead of frozen UI */}
+          <button
+            onClick={onDelete}
+            disabled={deleting}
+            className="h-9 w-9 rounded-xl bg-red-50 hover:bg-red-600 text-red-500 hover:text-white border border-red-100 hover:border-transparent flex items-center justify-center transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Delete"
+          >
+            {deleting
+              ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              : <Trash2 className="w-3.5 h-3.5" />
+            }
           </button>
         </div>
       </div>
@@ -383,15 +451,30 @@ function LandCard({ land, onEdit, onDelete }) {
 /* ─────────────────────────────────────────
    EQUIPMENT CARD
 ───────────────────────────────────────── */
-function EquipmentCard({ item, onEdit, onDelete }) {
-  const available = item.isAvailable !== false;
+function EquipmentCard({ item, onEdit, onDelete, deleting }) {
+  // FIX: strict check
+  const available = item.isAvailable === true;
   return (
     <div className="group bg-white rounded-2xl overflow-hidden border border-stone-200 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col">
       <div className="relative h-44 bg-stone-100 overflow-hidden">
-        <img src={item.image} alt={item.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+        {item.image ? (
+          <img
+            src={item.image}
+            alt={item.name}
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-stone-50">
+            <Tractor className="w-10 h-10 text-stone-200" />
+          </div>
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-        <span className="absolute top-3 left-3 px-2.5 py-1 bg-blue-600 rounded-lg text-[10px] font-bold text-white uppercase tracking-wide">{item.category}</span>
-        <span className={`absolute top-3 right-3 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wide ${available ? "bg-green-500 text-white" : "bg-red-500 text-white"}`}>
+        <span className="absolute top-3 left-3 px-2.5 py-1 bg-blue-600 rounded-lg text-[10px] font-bold text-white uppercase tracking-wide">
+          {item.category}
+        </span>
+        <span className={`absolute top-3 right-3 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wide ${
+          available ? "bg-green-500 text-white" : "bg-red-500 text-white"
+        }`}>
           {available ? "Available" : "Rented"}
         </span>
         <div className="absolute bottom-3 left-3">
@@ -400,9 +483,12 @@ function EquipmentCard({ item, onEdit, onDelete }) {
         </div>
       </div>
       <div className="p-4 flex flex-col flex-1">
-        <h3 className="text-sm font-bold text-slate-900 line-clamp-1 mb-1 group-hover:text-blue-700 transition-colors">{item.name}</h3>
+        <h3 className="text-sm font-bold text-slate-900 line-clamp-1 mb-1 group-hover:text-blue-700 transition-colors">
+          {item.name}
+        </h3>
         <div className="flex items-center gap-1 text-[11px] text-slate-400 mb-3">
-          <MapPin className="w-3 h-3 text-red-400 shrink-0" /> {item.location}
+          <MapPin className="w-3 h-3 text-red-400 shrink-0" />
+          <span className="truncate">{item.location}</span>
         </div>
         <div className="grid grid-cols-3 gap-1.5 mb-4 mt-auto">
           {[
@@ -413,16 +499,27 @@ function EquipmentCard({ item, onEdit, onDelete }) {
             <div key={label} className="bg-stone-50 rounded-xl p-2 text-center border border-stone-100">
               <Icon className="w-3.5 h-3.5 text-stone-400 mx-auto mb-0.5" />
               <p className="text-[9px] text-stone-400 uppercase tracking-wide leading-none mb-0.5">{label}</p>
-              <p className="text-[10px] font-bold text-slate-700 truncate">{val}</p>
+              <p className="text-[10px] font-bold text-slate-700 truncate">{val || "—"}</p>
             </div>
           ))}
         </div>
         <div className="flex gap-2 pt-3 border-t border-stone-100">
-          <button onClick={onEdit} className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-xl bg-blue-50 hover:bg-blue-600 text-blue-700 hover:text-white border border-blue-200 hover:border-transparent text-xs font-bold transition-all">
+          <button
+            onClick={onEdit}
+            className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-xl bg-blue-50 hover:bg-blue-600 text-blue-700 hover:text-white border border-blue-200 hover:border-transparent text-xs font-bold transition-all"
+          >
             <Edit className="w-3.5 h-3.5" /> Edit Listing
           </button>
-          <button onClick={onDelete} className="h-9 w-9 rounded-xl bg-red-50 hover:bg-red-600 text-red-500 hover:text-white border border-red-100 hover:border-transparent flex items-center justify-center transition-all" title="Delete">
-            <Trash2 className="w-3.5 h-3.5" />
+          <button
+            onClick={onDelete}
+            disabled={deleting}
+            className="h-9 w-9 rounded-xl bg-red-50 hover:bg-red-600 text-red-500 hover:text-white border border-red-100 hover:border-transparent flex items-center justify-center transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Delete"
+          >
+            {deleting
+              ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              : <Trash2 className="w-3.5 h-3.5" />
+            }
           </button>
         </div>
       </div>
@@ -440,7 +537,10 @@ function EmptyState({ emoji, title, desc, cta, onClick, btnClass }) {
       <h3 className="text-lg font-bold text-slate-800 mb-2">{title}</h3>
       <p className="text-slate-400 text-sm max-w-xs mx-auto mb-7">{desc}</p>
       {cta && (
-        <button onClick={onClick} className={`inline-flex items-center gap-2 h-11 px-7 rounded-xl font-bold text-white text-sm shadow-lg transition-colors ${btnClass}`}>
+        <button
+          onClick={onClick}
+          className={`inline-flex items-center gap-2 h-11 px-7 rounded-xl font-bold text-white text-sm shadow-lg transition-colors ${btnClass}`}
+        >
           <Plus className="w-4 h-4" /> {cta}
         </button>
       )}

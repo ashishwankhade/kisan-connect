@@ -14,7 +14,6 @@ export const registerCrop = async (req, res) => {
       return res.status(400).json({ message: 'Crop image is required for verification.' });
     }
 
-    // Safely extract Cloudinary URLs
     const cropImageUrl =
       req.files['cropImage'][0].path || req.files['cropImage'][0].secure_url;
 
@@ -45,14 +44,20 @@ export const registerCrop = async (req, res) => {
       landDocument: landDocUrl,
     });
 
+    // FIX: Fetch the full farmer record to guarantee phone/name are available.
+    // req.user may not have all fields depending on what the protect middleware selects.
+    const farmer = await User.findById(req.user.id).select('name phone');
+
     // 4. 📲 Notify FARMER — crop registered, pending verification
     //    Template: crop_registered
     //    "Hi {{farmerName}}! Your crop '{{cropType}}' has been registered. Our team will verify it shortly."
-    await sendWhatsAppMessage(
-      req.user.phone,
-      'crop_registered',
-      [req.user.name, cropType]
-    );
+    if (farmer?.phone) {
+      await sendWhatsAppMessage(
+        farmer.phone,
+        'crop_registered',
+        [farmer.name, cropType]
+      );
+    }
 
     res.status(201).json(crop);
   } catch (error) {
@@ -90,42 +95,9 @@ export const getAllCrops = async (req, res) => {
 };
 
 // ============================================================
-// @desc    Admin verifies or rejects a crop registration
-// @route   PUT /api/crops/:id/verify
-// 📲 Notifies: FARMER — their crop was Verified or Rejected
+// REMOVED: verifyCrop — this responsibility belongs exclusively
+// in adminController.js behind admin-only middleware.
+// Route: PUT /api/admin/crops/:id/verify
+// Keeping crop verification in two controllers caused the
+// crop.status vs crop.verificationStatus field conflict.
 // ============================================================
-export const verifyCrop = async (req, res) => {
-  try {
-    const { status } = req.body; // Expected: 'Verified' | 'Rejected'
-
-    if (!['Verified', 'Rejected'].includes(status)) {
-      return res.status(400).json({ message: 'Status must be Verified or Rejected' });
-    }
-
-    const crop = await Crop.findById(req.params.id);
-    if (!crop) {
-      return res.status(404).json({ message: 'Crop not found' });
-    }
-
-    // Update the crop status
-    crop.status = status;
-    const updatedCrop = await crop.save();
-
-    // Fetch the farmer to get phone + name
-    const farmer = await User.findById(crop.farmer);
-
-    // 📲 Notify FARMER — crop verified or rejected by admin
-    //    Template: crop_verified
-    //    "Hi {{farmerName}}! Your crop '{{cropType}}' has been {{status}} by the AgriSmart team."
-    await sendWhatsAppMessage(
-      farmer?.phone,
-      'crop_verified',
-      [farmer?.name, crop.cropType, status]
-    );
-
-    res.json(updatedCrop);
-  } catch (error) {
-    console.error('Crop Verify Error:', error);
-    res.status(500).json({ message: error.message });
-  }
-};

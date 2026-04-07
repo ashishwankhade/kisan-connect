@@ -5,10 +5,13 @@ import sendWhatsAppMessage from '../utils/whatsappNotify.js';
 // ============================================================
 // @desc    Fetch all available equipment (Public)
 // @route   GET /api/equipment
+// FIX: Now filters isAvailable: true — matches the behaviour
+// of getAllLands which also only shows available listings.
+// Previously this returned ALL equipment including rented-out items.
 // ============================================================
 export const getEquipment = async (req, res) => {
   try {
-    const equipment = await Equipment.find({}).sort({ createdAt: -1 });
+    const equipment = await Equipment.find({ isAvailable: true }).sort({ createdAt: -1 });
     res.json(equipment);
   } catch (error) {
     res.status(500).json({ message: 'Server Error' });
@@ -50,11 +53,13 @@ export const createEquipment = async (req, res) => {
     // 📲 Notify OWNER — equipment listing is live
     //    Template: equipment_listed
     //    "Hi {{ownerName}}! Your equipment '{{name}}' has been listed on AgriSmart at ₹{{price}}/day."
-    await sendWhatsAppMessage(
-      req.user.phone,
-      'equipment_listed',
-      [req.user.name, name, price]
-    );
+    if (req.user?.phone) {
+      await sendWhatsAppMessage(
+        req.user.phone,
+        'equipment_listed',
+        [req.user.name, name, price]
+      );
+    }
 
     res.status(201).json(createdEquipment);
   } catch (error) {

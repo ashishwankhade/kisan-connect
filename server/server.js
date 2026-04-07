@@ -39,10 +39,6 @@ app.use('/api/requests',  requestRoutes);
 app.use('/api/crops',     cropRoutes);
 app.use('/api/admin',     adminRoutes);
 
-// 4. Default Route
-app.get('/', (req, res) => {
-  res.send('API is running...');
-});
 
 app.get('/api/debug', (req, res) => {
   res.json({
@@ -52,6 +48,12 @@ app.get('/api/debug', (req, res) => {
     clientUrl: process.env.CLIENT_URL,
   });
 });
+
+// 4. Default Route
+app.get('/', (req, res) => {
+  res.send('API is running...');
+});
+
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

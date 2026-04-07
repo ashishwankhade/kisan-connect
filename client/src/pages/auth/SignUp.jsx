@@ -23,38 +23,35 @@ export default function SignUp({ setView }) {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
+  e.preventDefault();
+  setLoading(true);
+  setError("");
 
-    try {
-      const response = await api.post("/auth/register", formData);
-      
-      // 🔥 FIX APPLIED HERE: Token is no longer manually stored. 
-      // The browser automatically saves the HTTP-Only cookie from the response.
-      const { role, name } = response.data;
+  try {
+    const response = await api.post("/auth/register", formData);
+    
+    const { token, role, name } = response.data; // ✅ extract token
 
-      // Save UI state only
-      localStorage.setItem("role", role);
-      localStorage.setItem("userName", name);
-      
-      alert("Registration Successful!");
-      
-      // Redirect based on the role received from backend
-      if (role === 'admin') {
-        setView('adminDashboard');
-      } else {
-        setView('farmerDashboard');
-      }
+    // ✅ Save token + UI state to localStorage
+    localStorage.setItem("token", token);
+    localStorage.setItem("role", role);
+    localStorage.setItem("userName", name);
 
-    } catch (err) {
-      // Extract the specific message from the backend controller
-      const errorMessage = err.response?.data?.message || "Server error. Please check backend logs.";
-      setError(errorMessage);
-    } finally {
-      setLoading(false);
+    alert("Registration Successful!");
+
+    if (role === 'admin') {
+      setView('adminDashboard');
+    } else {
+      setView('farmerDashboard');
     }
-  };
+
+  } catch (err) {
+    const errorMessage = err.response?.data?.message || "Server error. Please check backend logs.";
+    setError(errorMessage);
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col justify-center items-center p-4">

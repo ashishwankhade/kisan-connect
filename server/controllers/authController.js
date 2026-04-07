@@ -17,21 +17,18 @@ const generateToken = (id) => {
 const sendTokenResponse = (user, statusCode, res) => {
   const token = generateToken(user._id);
 
-  const isProduction = process.env.NODE_ENV === 'production';
-
-  const options = {
-    expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-    httpOnly: true,
-    secure: isProduction,                      
-    sameSite: isProduction ? 'None' : 'Lax',  // ← Capital N in 'None'
-  };
-
   user.password = undefined;
 
-  res
-    .status(statusCode)
-    .cookie('token', token, options)
-    .json({ ... });
+  // ✅ Send token in response body — no cookies needed
+  res.status(statusCode).json({
+    token,  // ← add this
+    _id: user._id,
+    name: user.name,
+    email: user.email,
+    phone: user.phone,
+    district: user.district,
+    role: user.role,
+  });
 };
 
 // ============================================================
@@ -103,15 +100,6 @@ export const login = async (req, res) => {
 // };
 
 export const logout = (req, res) => {
-  const isProduction = process.env.NODE_ENV === 'production';
-
-  res.cookie('token', 'none', {
-    expires: new Date(Date.now() + 10 * 1000),
-    httpOnly: true,
-    secure: isProduction,
-    sameSite: isProduction ? 'None' : 'Lax',   // ✅ Must match login cookie flags
-  });
-
   res.status(200).json({ success: true, message: 'User logged out' });
 };
 

@@ -17,39 +17,37 @@ export default function Login({ setView }) {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setLoading(true);
+  setError("");
 
-    try {
-      // 1. Call Backend
-      const response = await api.post("/auth/login", formData);
-      
-      // 2. Extract Data (🔥 token is no longer extracted, it's safely in the HTTP-Only cookie!)
-      const { role, name } = response.data;
+  try {
+    const response = await api.post("/auth/login", formData);
+    
+    const { token, role, name } = response.data; // ✅ extract token
 
-      // 3. Save only UI state to Storage
-      localStorage.setItem("role", role);
-      localStorage.setItem("userName", name);
+    // ✅ Save token + UI state to localStorage
+    localStorage.setItem("token", token);
+    localStorage.setItem("role", role);
+    localStorage.setItem("userName", name);
 
-      alert(`Welcome back, ${name}!`);
+    alert(`Welcome back, ${name}!`);
 
-      // 4. Navigate based on Role
-      if (role === 'admin') {
-        setView('adminDashboard');
-      } else {
-        setView('farmerDashboard');
-      }
-
-    } catch (err) {
-      console.error("Login Error:", err);
-      const msg = err.response?.data?.message || "Invalid email or password.";
-      setError(msg);
-    } finally {
-      setLoading(false);
+    if (role === 'admin') {
+      setView('adminDashboard');
+    } else {
+      setView('farmerDashboard');
     }
-  };
+
+  } catch (err) {
+    console.error("Login Error:", err);
+    const msg = err.response?.data?.message || "Invalid email or password.";
+    setError(msg);
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col justify-center items-center p-6 relative overflow-hidden">

@@ -12,14 +12,41 @@ const generateToken = (id) => {
 // ============================================================
 // Helper: Generate token, set HttpOnly cookie, send response
 // ============================================================
+// const sendTokenResponse = (user, statusCode, res) => {
+//   const token = generateToken(user._id);
+
+//   const options = {
+//     expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+//     httpOnly: true,
+//     secure: process.env.NODE_ENV === 'production',
+//     sameSite: 'strict',
+//   };
+
+//   user.password = undefined;
+
+//   res
+//     .status(statusCode)
+//     .cookie('token', token, options)
+//     .json({
+//       _id: user._id,
+//       name: user.name,
+//       email: user.email,
+//       phone: user.phone,
+//       district: user.district,
+//       role: user.role,
+//     });
+// };
+
 const sendTokenResponse = (user, statusCode, res) => {
   const token = generateToken(user._id);
+
+  const isProduction = process.env.NODE_ENV === 'production';
 
   const options = {
     expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
+    secure: isProduction,                        // ✅ HTTPS only on Render
+    sameSite: isProduction ? 'None' : 'Lax',    // ✅ 'None' allows cross-domain cookies
   };
 
   user.password = undefined;
@@ -97,11 +124,24 @@ export const login = async (req, res) => {
 // @desc    Log user out / clear cookie
 // @route   POST /api/auth/logout
 // ============================================================
+// export const logout = (req, res) => {
+//   res.cookie('token', 'none', {
+//     expires: new Date(Date.now() + 10 * 1000),
+//     httpOnly: true,
+//   });
+//   res.status(200).json({ success: true, message: 'User logged out' });
+// };
+
 export const logout = (req, res) => {
+  const isProduction = process.env.NODE_ENV === 'production';
+
   res.cookie('token', 'none', {
     expires: new Date(Date.now() + 10 * 1000),
     httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? 'None' : 'Lax',   // ✅ Must match login cookie flags
   });
+
   res.status(200).json({ success: true, message: 'User logged out' });
 };
 

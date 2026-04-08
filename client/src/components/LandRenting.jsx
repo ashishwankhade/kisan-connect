@@ -14,7 +14,7 @@ import RentLandModal from "./RentLandModal";
 // Changed from localStorage.getItem("userName") → "userToken"
 // to align with the HttpOnly-cookie auth strategy from authController.
 // If your app still stores a flag on login, update both places to match.
-const isLoggedIn = () => !!localStorage.getItem("userToken");
+const isLoggedIn = () => !!localStorage.getItem("token");
 
 export default function LandRenting({ setView }) {
   const [lands, setLands] = useState([]);

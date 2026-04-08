@@ -5,7 +5,7 @@ const api = axios.create({
   // ✅ No withCredentials needed anymore
 });
 
-// ✅ Attach token from localStorage automatically on every request
+// // ✅ Attach token from localStorage automatically on every request
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   if (token) {
@@ -13,5 +13,16 @@ api.interceptors.request.use((config) => {
   }
   return config;
 });
+
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.clear();
+      window.location.href = '/'; // or however you navigate to login
+    }
+    return Promise.reject(error);
+  }
+);
 
 export default api;

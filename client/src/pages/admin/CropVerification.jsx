@@ -2,25 +2,21 @@ import { useState, useEffect, useRef } from "react";
 import api from "../../api/axios";
 import {
   CheckCircle, XCircle, Eye, Loader2, MapPin,
-  Search, X, AlertTriangle, RefreshCw,
+  Search, X, AlertTriangle, RefreshCw, Landmark, Building2,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 
 // ── Backend alignment notes ──────────────────────────────────────────
-// Route:  GET  /api/crops          → getAllCrops (admin sees all)
-// Route:  PUT  /api/admin/crops/:id/verify  { status: 'Verified'|'Rejected' }
-//         ↑ This is the ONLY canonical verify route (cropController
-//           duplicate was removed). Field is `verificationStatus`.
+// Route:  GET  /api/crops                       → getAllCrops (admin)
+// Route:  PUT  /api/admin/crops/:id/verify      { status: 'Verified'|'Rejected' }
 //
-// FIX 1:  Was calling window.confirm + alert() → replaced with an
-//         inline confirmation drawer and toast-style banner.
-// FIX 2:  Search input was uncontrolled (no state) → now filters live.
-// FIX 3:  No error state rendered → added error UI with retry button.
-// FIX 4:  Optimistic status update after verify so the row moves
-//         to the correct tab without a full refetch.
-// FIX 5:  Added "All" tab so admin can see the full picture.
-// FIX 6:  Counts per tab shown in filter buttons.
+// Latest model changes reflected here:
+//   • preferredCenter  — free-text string (farmer types mandi name)
+//   • bankAccountName  — account holder name
+//   • bankAccountNumber— account number
+//   • bankIFSC         — IFSC code (uppercase, 11 chars)
+//   • bankName         — bank name
+// Bank details are shown in the "Govt. Sale" column so the admin
+// payment team can initiate MSP transfers without switching screens.
 // ─────────────────────────────────────────────────────────────────────
 
 const STATUS_TABS = ["All", "Pending", "Verified", "Rejected"];
@@ -37,12 +33,12 @@ export default function CropVerification() {
   const [error, setError]         = useState("");
   const [filter, setFilter]       = useState("Pending");
   const [search, setSearch]       = useState("");
-  // Inline confirmation: { cropId, status } | null
-  const [confirm, setConfirm]     = useState(null);
+  const [confirm, setConfirm]     = useState(null); // { cropId, status } | null
   const [verifying, setVerifying] = useState(null); // cropId being verified
-  // FIX: toast banner { text, type } | null
   const [toast, setToast]         = useState(null);
-  const toastTimer                = useRef(null);
+  // Which crop row has the bank details panel expanded
+  const [expandedBank, setExpandedBank] = useState(null);
+  const toastTimer = useRef(null);
 
   const showToast = (text, type = "success") => {
     clearTimeout(toastTimer.current);
@@ -68,8 +64,6 @@ export default function CropVerification() {
     return () => clearTimeout(toastTimer.current);
   }, []);
 
-  // FIX: optimistic update — move row to correct tab immediately,
-  // no full refetch needed (avoids the UI flash)
   const handleVerify = async () => {
     if (!confirm) return;
     const { cropId, status } = confirm;
@@ -96,7 +90,6 @@ export default function CropVerification() {
     }
   };
 
-  // Counts for tab badges
   const counts = {
     All:      crops.length,
     Pending:  crops.filter(c => c.verificationStatus === "Pending").length,
@@ -105,16 +98,17 @@ export default function CropVerification() {
   };
 
   const filteredCrops = crops.filter(c => {
-    const matchesTab =
-      filter === "All" ? true : c.verificationStatus === filter;
-    const q = search.toLowerCase();
+    const matchesTab    = filter === "All" ? true : c.verificationStatus === filter;
+    const q             = search.toLowerCase();
     const matchesSearch =
       !q ||
       c.cropType?.toLowerCase().includes(q) ||
       c.variety?.toLowerCase().includes(q) ||
       c.farmer?.name?.toLowerCase().includes(q) ||
       c.district?.toLowerCase().includes(q) ||
-      c.village?.toLowerCase().includes(q);
+      c.village?.toLowerCase().includes(q) ||
+      c.preferredCenter?.toLowerCase().includes(q) ||   // mandi search
+      c.bankName?.toLowerCase().includes(q);             // bank search
     return matchesTab && matchesSearch;
   });
 
@@ -124,18 +118,13 @@ export default function CropVerification() {
       {/* ── Toast banner ── */}
       {toast && (
         <div className={`flex items-center gap-3 px-5 py-3.5 rounded-2xl text-sm font-semibold shadow-lg transition-all ${
-          toast.type === "success"
-            ? "bg-green-600 text-white"
-            : "bg-red-600 text-white"
+          toast.type === "success" ? "bg-green-600 text-white" : "bg-red-600 text-white"
         }`}>
           {toast.type === "success"
             ? <CheckCircle className="w-4 h-4 shrink-0" />
             : <XCircle className="w-4 h-4 shrink-0" />}
           {toast.text}
-          <button
-            onClick={() => setToast(null)}
-            className="ml-auto opacity-70 hover:opacity-100"
-          >
+          <button onClick={() => setToast(null)} className="ml-auto opacity-70 hover:opacity-100">
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -187,7 +176,6 @@ export default function CropVerification() {
 
       {/* ── Filter bar ── */}
       <div className="bg-white p-3 rounded-2xl shadow-sm border border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-3">
-        {/* Tab buttons with counts */}
         <div className="flex gap-1.5 flex-wrap">
           {STATUS_TABS.map(status => (
             <button
@@ -215,15 +203,14 @@ export default function CropVerification() {
           ))}
         </div>
 
-        {/* Search + refresh */}
         <div className="flex gap-2 w-full sm:w-auto">
           <div className="relative flex-1 sm:flex-initial">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
-              placeholder="Search crop, farmer, district..."
-              className="h-9 pl-9 pr-8 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-green-400 w-full sm:w-60 transition-colors"
+              placeholder="Search crop, farmer, mandi, bank..."
+              className="h-9 pl-9 pr-8 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-green-400 w-full sm:w-64 transition-colors"
             />
             {search && (
               <button
@@ -250,7 +237,11 @@ export default function CropVerification() {
           {filteredCrops.length === crops.length
             ? `${crops.length} crop${crops.length !== 1 ? "s" : ""} total`
             : `${filteredCrops.length} of ${crops.length} crops`}
-          {search && <span className="ml-1">matching <strong className="text-slate-600">"{search}"</strong></span>}
+          {search && (
+            <span className="ml-1">
+              matching <strong className="text-slate-600">"{search}"</strong>
+            </span>
+          )}
         </p>
       )}
 
@@ -280,7 +271,8 @@ export default function CropVerification() {
                   <th className="px-5 py-3.5">Farmer / Crop</th>
                   <th className="px-5 py-3.5">Location</th>
                   <th className="px-5 py-3.5">Yield</th>
-                  <th className="px-5 py-3.5">Govt. Sale</th>
+                  <th className="px-5 py-3.5">Govt. Sale & Mandi</th>
+                  <th className="px-5 py-3.5">Bank Details</th>
                   <th className="px-5 py-3.5">Evidence</th>
                   <th className="px-5 py-3.5 text-right">Actions</th>
                 </tr>
@@ -288,7 +280,7 @@ export default function CropVerification() {
               <tbody className="divide-y divide-slate-50 text-slate-700">
                 {filteredCrops.length === 0 ? (
                   <tr>
-                    <td colSpan="6" className="p-12 text-center">
+                    <td colSpan="7" className="p-12 text-center">
                       <div className="flex flex-col items-center gap-2">
                         <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center">
                           <Search className="w-5 h-5 text-slate-300" />
@@ -298,7 +290,10 @@ export default function CropVerification() {
                           {search ? ` matching "${search}"` : " found"}.
                         </p>
                         {search && (
-                          <button onClick={() => setSearch("")} className="text-xs text-green-600 font-semibold hover:text-green-500">
+                          <button
+                            onClick={() => setSearch("")}
+                            className="text-xs text-green-600 font-semibold hover:text-green-500"
+                          >
                             Clear search
                           </button>
                         )}
@@ -318,7 +313,9 @@ export default function CropVerification() {
                         <p className="font-bold text-slate-900">
                           {crop.cropType}
                           {crop.variety && (
-                            <span className="text-xs font-normal text-slate-400 ml-1.5">· {crop.variety}</span>
+                            <span className="text-xs font-normal text-slate-400 ml-1.5">
+                              · {crop.variety}
+                            </span>
                           )}
                         </p>
                         <p className="text-xs text-slate-500 mt-0.5">
@@ -350,22 +347,64 @@ export default function CropVerification() {
                         </p>
                       </td>
 
-                      {/* Govt. sale — FIX: was missing this column entirely */}
+                      {/* Govt. Sale & Mandi — free-text mandi shown as typed by farmer */}
                       <td className="px-5 py-4">
                         {crop.sellToGovt ? (
-                          <div>
+                          <div className="space-y-1">
                             <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide px-2 py-1 bg-green-50 text-green-700 rounded-lg border border-green-100">
-                              ✓ Yes
+                              ✓ Yes · {crop.sellingQuantity} Qtl
                             </span>
-                            {crop.sellingQuantity && (
-                              <p className="text-xs text-slate-500 mt-1">
-                                {crop.sellingQuantity} Qtl
-                                {crop.preferredCenter && ` → ${crop.preferredCenter}`}
+                            {/* Free-text mandi name */}
+                            {crop.preferredCenter && (
+                              <p className="flex items-center gap-1 text-xs text-slate-600 font-medium">
+                                <Building2 className="w-3 h-3 text-amber-500 shrink-0" />
+                                {crop.preferredCenter}
+                              </p>
+                            )}
+                            {crop.sellingPeriod && (
+                              <p className="text-[10px] text-slate-400">
+                                📅 {crop.sellingPeriod}
                               </p>
                             )}
                           </div>
                         ) : (
                           <span className="text-xs text-slate-400">No</span>
+                        )}
+                      </td>
+
+                      {/* Bank Details — expandable panel */}
+                      <td className="px-5 py-4">
+                        {crop.sellToGovt && crop.bankAccountNumber ? (
+                          <div>
+                            <button
+                              onClick={() =>
+                                setExpandedBank(
+                                  expandedBank === crop._id ? null : crop._id
+                                )
+                              }
+                              className="inline-flex items-center gap-1.5 text-[11px] font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-lg hover:bg-indigo-100 transition-colors"
+                            >
+                              <Landmark className="w-3 h-3" />
+                              {expandedBank === crop._id ? "Hide" : "View"} Bank
+                            </button>
+
+                            {/* Expanded bank info panel */}
+                            {expandedBank === crop._id && (
+                              <div className="mt-2 p-3 rounded-xl bg-indigo-50 border border-indigo-100 space-y-1.5 min-w-[220px]">
+                                <BankRow label="Name"   val={crop.bankAccountName} />
+                                <BankRow label="A/C No" val={crop.bankAccountNumber} mono />
+                                <BankRow label="IFSC"   val={crop.bankIFSC} mono />
+                                <BankRow label="Bank"   val={crop.bankName} />
+                              </div>
+                            )}
+                          </div>
+                        ) : crop.sellToGovt ? (
+                          /* Farmer opted to sell but didn't provide bank details — flag it */
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-orange-600 bg-orange-50 px-2 py-1 rounded-lg border border-orange-100">
+                            ⚠ Missing
+                          </span>
+                        ) : (
+                          <span className="text-xs text-slate-300">—</span>
                         )}
                       </td>
 
@@ -404,20 +443,28 @@ export default function CropVerification() {
                         ) : crop.verificationStatus === "Pending" ? (
                           <div className="flex items-center justify-end gap-2">
                             <button
-                              onClick={() => setConfirm({ cropId: crop._id, status: "Verified" })}
+                              onClick={() =>
+                                setConfirm({ cropId: crop._id, status: "Verified" })
+                              }
                               className="flex items-center gap-1.5 h-8 px-3.5 rounded-lg bg-green-600 hover:bg-green-500 text-white text-xs font-bold transition-colors"
                             >
                               <CheckCircle className="w-3.5 h-3.5" /> Approve
                             </button>
                             <button
-                              onClick={() => setConfirm({ cropId: crop._id, status: "Rejected" })}
+                              onClick={() =>
+                                setConfirm({ cropId: crop._id, status: "Rejected" })
+                              }
                               className="flex items-center gap-1.5 h-8 px-3.5 rounded-lg bg-red-50 hover:bg-red-600 text-red-600 hover:text-white border border-red-200 hover:border-transparent text-xs font-bold transition-all"
                             >
                               <XCircle className="w-3.5 h-3.5" /> Reject
                             </button>
                           </div>
                         ) : (
-                          <span className={`inline-flex items-center px-3 py-1 rounded-lg text-xs font-bold border ${STATUS_STYLE[crop.verificationStatus] || ""}`}>
+                          <span
+                            className={`inline-flex items-center px-3 py-1 rounded-lg text-xs font-bold border ${
+                              STATUS_STYLE[crop.verificationStatus] || ""
+                            }`}
+                          >
                             {crop.verificationStatus}
                           </span>
                         )}
@@ -430,6 +477,20 @@ export default function CropVerification() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+/* ── Small helper: single row inside the bank details panel ── */
+function BankRow({ label, val, mono = false }) {
+  return (
+    <div className="flex items-start gap-2">
+      <span className="text-[9px] font-bold uppercase tracking-wider text-indigo-400 w-12 shrink-0 pt-px">
+        {label}
+      </span>
+      <span className={`text-[11px] text-indigo-900 font-semibold break-all ${mono ? "font-mono tracking-wider" : ""}`}>
+        {val || "—"}
+      </span>
     </div>
   );
 }

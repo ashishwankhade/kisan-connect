@@ -4,7 +4,7 @@ import {
   Sprout, Calendar, MapPin, Ruler, Droplets, Layers,
   ChevronLeft, Navigation, Save, Loader2, Camera,
   FileText, Tractor, ArrowRight, CheckCircle, X, Plus, Clock,
-  Wheat, Wind, Sun, CloudRain,
+  Wheat, Wind, Sun, CloudRain, Landmark, CreditCard, Hash, Building2,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
@@ -35,15 +35,10 @@ const Label = ({ children, light }) => (
 function BotanicalBg() {
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none select-none">
-      {/* Base gradient */}
       <div className="absolute inset-0 bg-gradient-to-br from-[#0a1f0a] via-[#0d2b0d] to-[#071a07]" />
-
-      {/* Radial glow spots */}
       <div className="absolute top-[-10%] left-[-5%] w-[600px] h-[600px] rounded-full bg-green-500/10 blur-[120px]" />
       <div className="absolute bottom-[-10%] right-[-5%] w-[500px] h-[500px] rounded-full bg-emerald-400/8 blur-[100px]" />
       <div className="absolute top-[40%] right-[20%] w-[300px] h-[300px] rounded-full bg-lime-400/6 blur-[80px]" />
-
-      {/* SVG botanical illustration */}
       <svg
         className="absolute inset-0 w-full h-full opacity-[0.12]"
         viewBox="0 0 1200 800"
@@ -51,18 +46,15 @@ function BotanicalBg() {
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
       >
-        {/* Large wheat stalks left */}
         <g stroke="#86efac" strokeWidth="2.5" strokeLinecap="round">
-          <line x1="80" y1="800" x2="80" y2="200" className="animate-[grow_3s_ease-out_forwards]" />
+          <line x1="80" y1="800" x2="80" y2="200" />
           <line x1="80" y1="200" x2="60" y2="140" />
           <line x1="80" y1="220" x2="50" y2="175" />
           <line x1="80" y1="240" x2="100" y2="180" />
           <line x1="80" y1="260" x2="110" y2="210" />
           <line x1="80" y1="280" x2="55" y2="230" />
-          {/* wheat head */}
           <ellipse cx="75" cy="130" rx="10" ry="30" fill="#86efac" fillOpacity="0.3" stroke="#86efac" />
         </g>
-
         <g stroke="#86efac" strokeWidth="2" strokeLinecap="round" opacity="0.7">
           <line x1="130" y1="800" x2="140" y2="280" />
           <line x1="140" y1="280" x2="125" y2="220" />
@@ -70,19 +62,14 @@ function BotanicalBg() {
           <line x1="140" y1="320" x2="160" y2="265" />
           <ellipse cx="128" cy="210" rx="8" ry="24" fill="#86efac" fillOpacity="0.2" stroke="#86efac" />
         </g>
-
         <g stroke="#4ade80" strokeWidth="2" strokeLinecap="round" opacity="0.5">
           <line x1="40" y1="800" x2="35" y2="350" />
           <line x1="35" y1="350" x2="20" y2="290" />
           <line x1="35" y1="370" x2="55" y2="315" />
           <ellipse cx="22" cy="278" rx="7" ry="20" fill="#4ade80" fillOpacity="0.2" stroke="#4ade80" />
         </g>
-
-        {/* Large leaves — bottom left */}
         <path d="M0 650 Q80 550 160 600 Q100 700 0 650Z" fill="#22c55e" fillOpacity="0.15" stroke="#22c55e" strokeWidth="1.5" />
         <path d="M0 700 Q100 620 200 660 Q130 750 0 700Z" fill="#16a34a" fillOpacity="0.12" />
-
-        {/* Wheat stalks right */}
         <g stroke="#fbbf24" strokeWidth="2.5" strokeLinecap="round" opacity="0.6">
           <line x1="1120" y1="800" x2="1110" y2="150" />
           <line x1="1110" y1="150" x2="1090" y2="90" />
@@ -92,57 +79,35 @@ function BotanicalBg() {
           <line x1="1110" y1="230" x2="1088" y2="188" />
           <ellipse cx="1094" cy="78" rx="9" ry="26" fill="#fbbf24" fillOpacity="0.25" stroke="#fbbf24" />
         </g>
-
         <g stroke="#fbbf24" strokeWidth="2" strokeLinecap="round" opacity="0.4">
           <line x1="1160" y1="800" x2="1165" y2="300" />
           <line x1="1165" y1="300" x2="1148" y2="240" />
           <line x1="1165" y1="320" x2="1182" y2="270" />
           <ellipse cx="1150" cy="230" rx="8" ry="22" fill="#fbbf24" fillOpacity="0.2" stroke="#fbbf24" />
         </g>
-
-        {/* Large decorative leaves top right */}
         <path d="M1200 100 Q1100 200 1050 150 Q1120 50 1200 100Z" fill="#22c55e" fillOpacity="0.12" stroke="#22c55e" strokeWidth="1" />
         <path d="M1200 160 Q1080 240 1040 190 Q1110 100 1200 160Z" fill="#16a34a" fillOpacity="0.1" />
-
-        {/* Center scatter — small sprouts */}
         <g stroke="#86efac" strokeWidth="1.5" opacity="0.3">
           <line x1="600" y1="750" x2="600" y2="680" />
           <line x1="600" y1="690" x2="585" y2="670" />
           <line x1="600" y1="695" x2="615" y2="672" />
-
           <line x1="900" y1="780" x2="900" y2="720" />
           <line x1="900" y1="730" x2="888" y2="713" />
           <line x1="900" y1="735" x2="912" y2="715" />
-
           <line x1="300" y1="760" x2="302" y2="700" />
           <line x1="302" y1="710" x2="290" y2="695" />
           <line x1="302" y1="714" x2="314" y2="696" />
         </g>
-
-        {/* Horizontal ground line */}
         <line x1="0" y1="795" x2="1200" y2="795" stroke="#22c55e" strokeWidth="1" opacity="0.15" />
-
-        {/* Dot grid pattern */}
         {[...Array(8)].map((_, row) =>
           [...Array(14)].map((_, col) => (
-            <circle
-              key={`${row}-${col}`}
-              cx={80 + col * 80}
-              cy={80 + row * 90}
-              r="1.5"
-              fill="#22c55e"
-              fillOpacity="0.2"
-            />
+            <circle key={`${row}-${col}`} cx={80 + col * 80} cy={80 + row * 90} r="1.5" fill="#22c55e" fillOpacity="0.2" />
           ))
         )}
-
-        {/* Decorative circles */}
         <circle cx="200" cy="200" r="80" stroke="#22c55e" strokeWidth="1" strokeDasharray="6 10" opacity="0.15" fill="none" />
         <circle cx="1000" cy="600" r="100" stroke="#fbbf24" strokeWidth="1" strokeDasharray="6 10" opacity="0.12" fill="none" />
         <circle cx="600" cy="400" r="200" stroke="#22c55e" strokeWidth="0.5" strokeDasharray="4 12" opacity="0.08" fill="none" />
       </svg>
-
-      {/* Noise grain texture overlay */}
       <div
         className="absolute inset-0 opacity-[0.04]"
         style={{
@@ -195,6 +160,8 @@ export default function CropRegistration({ setView }) {
     gpsCoordinates: "", cropImage: null, landDocument: null,
     expectedYield: "", sellToGovt: false,
     sellingQuantity: "", preferredCenter: "", sellingPeriod: "",
+    // Bank details
+    bankAccountName: "", bankAccountNumber: "", bankIFSC: "", bankName: "",
   });
 
   useEffect(() => {
@@ -225,25 +192,15 @@ export default function CropRegistration({ setView }) {
     const v = videoRef.current;
     const c = canvasRef.current;
     if (!v || !c) return;
-
     const w = v.videoWidth  || v.clientWidth  || 640;
     const h = v.videoHeight || v.clientHeight || 480;
-    if (w === 0 || h === 0) {
-      alert("Camera not ready yet. Please wait a moment and try again.");
-      return;
-    }
-
-    c.width  = w;
-    c.height = h;
+    if (w === 0 || h === 0) { alert("Camera not ready yet. Please wait a moment and try again."); return; }
+    c.width = w; c.height = h;
     const ctx = c.getContext("2d");
     if (!ctx) return;
     ctx.drawImage(v, 0, 0, w, h);
-
     c.toBlob((blob) => {
-      if (!blob) {
-        alert("Could not capture photo. Please try again.");
-        return;
-      }
+      if (!blob) { alert("Could not capture photo. Please try again."); return; }
       const file = new File([blob], "crop_photo.jpg", { type: "image/jpeg" });
       const previewUrl = URL.createObjectURL(blob);
       setFormData((p) => ({ ...p, cropImage: file }));
@@ -274,6 +231,12 @@ export default function CropRegistration({ setView }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.cropImage) { alert("Please take or upload a crop photo."); return; }
+    // Validate bank details if selling to govt
+    if (formData.sellToGovt) {
+      if (!formData.bankAccountName || !formData.bankAccountNumber || !formData.bankIFSC || !formData.bankName) {
+        alert("Please fill in all bank account details to receive MSP payment."); return;
+      }
+    }
     setLoading(true);
     try {
       const fd = new FormData();
@@ -281,7 +244,13 @@ export default function CropRegistration({ setView }) {
       const res = await api.post("/crops", fd, { headers: { "Content-Type": "multipart/form-data" } });
       setExistingCrops(p => [res.data, ...p]);
       setShowForm(false);
-      setFormData({ cropType:"Wheat",variety:"",season:"Rabi",sowingDate:"",expectedHarvestDate:"",area:"",soilType:"Black Soil",irrigationType:"Drip",village:"",district:"",state:"Maharashtra",gpsCoordinates:"",cropImage:null,landDocument:null,expectedYield:"",sellToGovt:false,sellingQuantity:"",preferredCenter:"",sellingPeriod:"" });
+      setFormData({
+        cropType:"Wheat", variety:"", season:"Rabi", sowingDate:"", expectedHarvestDate:"",
+        area:"", soilType:"Black Soil", irrigationType:"Drip", village:"", district:"",
+        state:"Maharashtra", gpsCoordinates:"", cropImage:null, landDocument:null,
+        expectedYield:"", sellToGovt:false, sellingQuantity:"", preferredCenter:"", sellingPeriod:"",
+        bankAccountName:"", bankAccountNumber:"", bankIFSC:"", bankName:"",
+      });
       setCapturedPreview(null); setCurrentStep(1);
     } catch (err) { alert(err.response?.data?.message || "Server error"); }
     finally { setLoading(false); }
@@ -300,16 +269,12 @@ export default function CropRegistration({ setView }) {
     </div>
   );
 
-  /* ══════════════════════════════════════════════════════
-     RENDER
-  ══════════════════════════════════════════════════════ */
   return (
     <div className="min-h-screen relative overflow-hidden" style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,700;1,600&display=swap');
         @keyframes floatUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
         @keyframes shimmer { 0%,100% { opacity:0.5; } 50% { opacity:1; } }
-        @keyframes spinSlow { to { transform: rotate(360deg); } }
         .float-1 { animation: floatUp 0.6s ease forwards; }
         .float-2 { animation: floatUp 0.6s 0.1s ease both; }
         .float-3 { animation: floatUp 0.6s 0.2s ease both; }
@@ -322,13 +287,10 @@ export default function CropRegistration({ setView }) {
 
       <BotanicalBg />
 
-      {/* ─── FULL PAGE LAYOUT: left panel + right scrollable ─── */}
       <div className="relative z-10 min-h-screen flex flex-col lg:flex-row">
 
-        {/* ════════════ LEFT PANEL (sticky on lg) ════════════ */}
+        {/* ════════════ LEFT PANEL ════════════ */}
         <div className="lg:sticky lg:top-0 lg:h-screen lg:w-[380px] xl:w-[420px] shrink-0 flex flex-col justify-between p-8 lg:p-10">
-
-          {/* Back */}
           <button
             onClick={() => setView("landing")}
             className="self-start flex items-center gap-2 text-white/30 hover:text-white/70 transition-colors text-xs font-medium uppercase tracking-widest mb-12"
@@ -336,9 +298,7 @@ export default function CropRegistration({ setView }) {
             <ChevronLeft className="w-3.5 h-3.5" /> Home
           </button>
 
-          {/* Main copy */}
           <div className="flex-1 flex flex-col justify-center">
-            {/* badge */}
             <div className="inline-flex items-center gap-2 bg-green-500/15 border border-green-500/25 rounded-full px-3.5 py-1.5 mb-6 self-start">
               <div className="w-1.5 h-1.5 rounded-full bg-green-400 shimmer" />
               <span className="text-green-400 text-[11px] font-bold uppercase tracking-widest">
@@ -363,11 +323,10 @@ export default function CropRegistration({ setView }) {
               {showForm ? (
                 currentStep === 1 ? "Tell us what you're growing this season. Accurate details help us serve you better." :
                 currentStep === 2 ? "A GPS tag and field photo verify your crop's authenticity for government records." :
-                "Estimate your yield and register for government MSP procurement at the nearest mandi."
+                "Estimate your yield, choose your mandi, and add your bank details for direct MSP payment."
               ) : "All your registered crops tracked in one place. Verification happens within 48 hours."}
             </p>
 
-            {/* Step tracker */}
             {showForm && (
               <div className="mt-10 space-y-3">
                 {STEPS.map(s => (
@@ -387,15 +346,11 @@ export default function CropRegistration({ setView }) {
                         {s.label}
                       </p>
                     </div>
-                    {s.num < 3 && (
-                      <div className="absolute left-[58px] mt-8 w-px h-3 bg-white/10" style={{ position: "static", display: "none" }} />
-                    )}
                   </div>
                 ))}
               </div>
             )}
 
-            {/* Dashboard stats */}
             {!showForm && existingCrops.length > 0 && (
               <div className="mt-10 grid grid-cols-1 gap-3">
                 <StatPill icon={Sprout} val={existingCrops.length} label="Total Crops" color="#22c55e" />
@@ -405,20 +360,18 @@ export default function CropRegistration({ setView }) {
             )}
           </div>
 
-          {/* bottom decoration */}
           <div className="hidden lg:flex items-center gap-2 text-white/15 text-[10px] uppercase tracking-widest font-medium">
             <Sprout className="w-3.5 h-3.5" /> AgriSmart · Crop Registration
           </div>
         </div>
 
-        {/* ════════════ RIGHT PANEL (scrollable content) ════════════ */}
+        {/* ════════════ RIGHT PANEL ════════════ */}
         <div className="flex-1 flex flex-col min-h-screen lg:min-h-0 lg:overflow-y-auto">
           <div className="flex-1 p-6 lg:p-10 flex flex-col">
 
             {/* ─── DASHBOARD VIEW ─── */}
             {!showForm ? (
               <div className="max-w-2xl w-full mx-auto flex-1 flex flex-col gap-6 float-1">
-
                 <div className="flex items-center justify-between">
                   <h2 className="text-white font-bold text-lg">Registered Crops</h2>
                   <button
@@ -429,7 +382,6 @@ export default function CropRegistration({ setView }) {
                     <Plus className="w-4 h-4" /> Register New
                   </button>
                 </div>
-
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   {existingCrops.map(crop => (
                     <CropCard key={crop._id} crop={crop} />
@@ -438,10 +390,8 @@ export default function CropRegistration({ setView }) {
               </div>
 
             ) : (
-            /* ─── FORM VIEW ─── */
+              /* ─── FORM VIEW ─── */
               <div className="max-w-2xl w-full mx-auto flex-1 flex flex-col gap-6">
-
-                {/* dismiss button if has existing */}
                 {existingCrops.length > 0 && (
                   <div className="flex justify-end">
                     <button
@@ -461,8 +411,6 @@ export default function CropRegistration({ setView }) {
                   {/* ══ STEP 1 ══ */}
                   {currentStep === 1 && (
                     <div className="space-y-5 float-1">
-
-                      {/* Crop Type + Variety + Season */}
                       <FormCard title="What are you growing?" icon="🌱">
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                           <div>
@@ -488,7 +436,6 @@ export default function CropRegistration({ setView }) {
                         </div>
                       </FormCard>
 
-                      {/* Dates */}
                       <FormCard title="Growing Timeline" icon="📅">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div>
@@ -506,7 +453,6 @@ export default function CropRegistration({ setView }) {
                         </div>
                       </FormCard>
 
-                      {/* Land details */}
                       <FormCard title="Land Details" icon="🪨">
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                           <div>
@@ -538,8 +484,6 @@ export default function CropRegistration({ setView }) {
                   {/* ══ STEP 2 ══ */}
                   {currentStep === 2 && (
                     <div className="space-y-5 float-1">
-
-                      {/* GPS */}
                       <FormCard title="GPS Location" icon="📡">
                         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                           <div>
@@ -563,7 +507,6 @@ export default function CropRegistration({ setView }) {
                         </div>
                       </FormCard>
 
-                      {/* Address */}
                       <FormCard title="Field Address" icon="🏘️">
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                           {[
@@ -581,9 +524,7 @@ export default function CropRegistration({ setView }) {
                         </div>
                       </FormCard>
 
-                      {/* Photo + Doc */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-
                         {/* Crop photo */}
                         <FormCard title="Crop Photo" icon="📸" required>
                           <div className="rounded-xl border border-white/15 bg-white/5 overflow-hidden min-h-[200px] flex flex-col items-center justify-center">
@@ -668,6 +609,7 @@ export default function CropRegistration({ setView }) {
                   {currentStep === 3 && (
                     <div className="space-y-5 float-1">
 
+                      {/* Expected Yield */}
                       <FormCard title="Expected Yield" icon="⚖️">
                         <div className="max-w-xs">
                           <Label>Total Expected Yield (Quintals)</Label>
@@ -677,10 +619,9 @@ export default function CropRegistration({ setView }) {
                         </div>
                       </FormCard>
 
-                      {/* MSP card */}
+                      {/* MSP / Sell to Govt */}
                       <div className="rounded-2xl glass p-6">
                         <label className="flex items-start gap-4 cursor-pointer">
-                          {/* toggle */}
                           <div className="relative mt-0.5 shrink-0">
                             <input type="checkbox" name="sellToGovt" checked={formData.sellToGovt} onChange={handleChange} className="sr-only peer" />
                             <div className="w-11 h-6 rounded-full bg-white/10 peer-checked:bg-green-500 border border-white/15 peer-checked:border-green-400 transition-all" />
@@ -688,28 +629,36 @@ export default function CropRegistration({ setView }) {
                           </div>
                           <div>
                             <p className="font-bold text-white text-sm">Sell to Government at MSP?</p>
-                            <p className="text-white/35 text-xs mt-0.5">We'll arrange a government buying center near you.</p>
+                            <p className="text-white/35 text-xs mt-0.5">We'll coordinate with your nearest mandi for procurement.</p>
                           </div>
                         </label>
 
                         {formData.sellToGovt && (
-                          <div className="mt-6 pt-6 border-t border-white/10 grid grid-cols-1 sm:grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2 duration-200">
-                            <div>
-                              <Label>Quantity to Sell (Quintals)</Label>
-                              <input type="number" name="sellingQuantity" value={formData.sellingQuantity} onChange={handleChange} placeholder="e.g. 40"
-                                className="w-full h-11 rounded-xl border border-white/20 bg-white/10 px-3 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-white/30"
-                                required={formData.sellToGovt} />
+                          <div className="mt-6 pt-6 border-t border-white/10 space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                              <div>
+                                <Label>Quantity to Sell (Quintals)</Label>
+                                <input type="number" name="sellingQuantity" value={formData.sellingQuantity} onChange={handleChange} placeholder="e.g. 40"
+                                  className="w-full h-11 rounded-xl border border-white/20 bg-white/10 px-3 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-white/30"
+                                  required={formData.sellToGovt} />
+                              </div>
+                              <div>
+                                {/* ── FREE-TEXT MANDI INPUT (was dropdown) ── */}
+                                <Label>Preferred Mandi</Label>
+                                <input
+                                  type="text"
+                                  name="preferredCenter"
+                                  value={formData.preferredCenter}
+                                  onChange={handleChange}
+                                  placeholder="e.g. Nagpur Kalamna APMC"
+                                  className="w-full h-11 rounded-xl border border-white/20 bg-white/10 px-3 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-white/30"
+                                  required={formData.sellToGovt}
+                                />
+                                <p className="text-[10px] text-white/25 mt-1.5 pl-1">Type your nearest mandi / APMC name</p>
+                              </div>
                             </div>
+
                             <div>
-                              <Label>Preferred Mandi</Label>
-                              <select name="preferredCenter" value={formData.preferredCenter} onChange={handleChange} className={selectCls} required={formData.sellToGovt}>
-                                <option value="">Select Mandi</option>
-                                <option value="Nagpur APMC">Nagpur Kalamna APMC</option>
-                                <option value="Katol APMC">Katol APMC</option>
-                                <option value="Saoner APMC">Saoner APMC</option>
-                              </select>
-                            </div>
-                            <div className="sm:col-span-2">
                               <Label>Selling Month</Label>
                               <input type="month" name="sellingPeriod" value={formData.sellingPeriod} onChange={handleChange}
                                 className="w-full h-11 rounded-xl border border-white/20 bg-white/10 px-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-white/30 [color-scheme:dark] max-w-xs"
@@ -718,6 +667,87 @@ export default function CropRegistration({ setView }) {
                           </div>
                         )}
                       </div>
+
+                      {/* ── BANK DETAILS CARD ── */}
+                      <FormCard title="Bank Account for Payment" icon="🏦" subtitle={formData.sellToGovt ? "Required for MSP transfer" : "Optional"}>
+                        {/* Info banner */}
+                        <div className="flex items-start gap-3 rounded-xl bg-amber-500/10 border border-amber-500/20 px-4 py-3 mb-4">
+                          <Landmark className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                          <p className="text-[11px] text-amber-300/80 leading-relaxed">
+                            Your payment for crop sale will be transferred directly to this account after verification. Details are securely stored and only used for MSP disbursement.
+                          </p>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          {/* Account Holder Name */}
+                          <div className="sm:col-span-2">
+                            <Label>Account Holder Name</Label>
+                            <div className="relative">
+                              <input
+                                name="bankAccountName"
+                                value={formData.bankAccountName}
+                                onChange={handleChange}
+                                placeholder="As printed on your passbook"
+                                className="w-full h-11 rounded-xl border border-white/20 bg-white/10 pl-10 pr-3 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-white/30"
+                                required={formData.sellToGovt}
+                              />
+                              <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/25" />
+                            </div>
+                          </div>
+
+                          {/* Account Number */}
+                          <div>
+                            <Label>Account Number</Label>
+                            <div className="relative">
+                              <input
+                                name="bankAccountNumber"
+                                value={formData.bankAccountNumber}
+                                onChange={handleChange}
+                                placeholder="e.g. 1234567890"
+                                inputMode="numeric"
+                                className="w-full h-11 rounded-xl border border-white/20 bg-white/10 pl-10 pr-3 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-white/30 tracking-widest font-mono"
+                                required={formData.sellToGovt}
+                              />
+                              <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/25" />
+                            </div>
+                          </div>
+
+                          {/* IFSC Code */}
+                          <div>
+                            <Label>IFSC Code</Label>
+                            <div className="relative">
+                              <input
+                                name="bankIFSC"
+                                value={formData.bankIFSC}
+                                onChange={(e) => setFormData(p => ({ ...p, bankIFSC: e.target.value.toUpperCase() }))}
+                                placeholder="e.g. SBIN0001234"
+                                maxLength={11}
+                                className="w-full h-11 rounded-xl border border-white/20 bg-white/10 pl-10 pr-3 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-white/30 uppercase tracking-widest font-mono"
+                                required={formData.sellToGovt}
+                              />
+                              <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/25" />
+                            </div>
+                            <p className="text-[10px] text-white/25 mt-1.5 pl-1">11-character code on your cheque book</p>
+                          </div>
+
+                          {/* Bank Name */}
+                          <div className="sm:col-span-2">
+                            <Label>Bank Name</Label>
+                            <div className="relative">
+                              <input
+                                name="bankName"
+                                value={formData.bankName}
+                                onChange={handleChange}
+                                placeholder="e.g. State Bank of India"
+                                className="w-full h-11 rounded-xl border border-white/20 bg-white/10 pl-10 pr-3 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-white/30"
+                                required={formData.sellToGovt}
+                              />
+                              <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/25" />
+                            </div>
+                          </div>
+                        </div>
+                      </FormCard>
+
                     </div>
                   )}
 
@@ -746,7 +776,10 @@ export default function CropRegistration({ setView }) {
                         type="submit"
                         disabled={loading || !formData.gpsCoordinates}
                         className="flex items-center gap-2 h-11 px-8 rounded-xl text-white font-bold text-sm transition-all disabled:opacity-40"
-                        style={{ background: loading || !formData.gpsCoordinates ? "#374151" : "linear-gradient(135deg,#22c55e,#16a34a)", boxShadow: "0 4px 24px #22c55e50" }}
+                        style={{
+                          background: loading || !formData.gpsCoordinates ? "#374151" : "linear-gradient(135deg,#22c55e,#16a34a)",
+                          boxShadow: "0 4px 24px #22c55e50",
+                        }}
                       >
                         {loading
                           ? <><Loader2 className="w-4 h-4 animate-spin" /> Submitting…</>
@@ -761,7 +794,6 @@ export default function CropRegistration({ setView }) {
             )}
           </div>
         </div>
-
       </div>
     </div>
   );
@@ -798,19 +830,13 @@ function CropCard({ crop }) {
   return (
     <div className="group rounded-2xl overflow-hidden glass hover:scale-[1.02] transition-all duration-300 float-1"
       style={{ boxShadow: `0 0 0 1px rgba(255,255,255,0.1), 0 8px 32px rgba(0,0,0,0.4)` }}>
-
-      {/* Image */}
       <div className="relative h-44 overflow-hidden">
         <img src={crop.cropImage} alt={crop.cropType} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-
-        {/* Status */}
         <div className={`absolute top-3 right-3 flex items-center gap-1.5 px-3 py-1.5 rounded-xl ${status.bg} text-white text-[10px] font-bold shadow`}
           style={{ boxShadow: `0 0 12px ${status.glow}60` }}>
           <Icon className="w-3 h-3" /> {status.label}
         </div>
-
-        {/* Season + name */}
         <div className="absolute bottom-3 left-3">
           <p className="text-green-300 text-[9px] font-bold uppercase tracking-widest">{crop.season} Season</p>
           <p className="text-white text-lg font-bold leading-tight">
@@ -818,8 +844,6 @@ function CropCard({ crop }) {
           </p>
         </div>
       </div>
-
-      {/* Body */}
       <div className="p-4 space-y-3">
         <div className="grid grid-cols-2 gap-2">
           {[
@@ -835,6 +859,12 @@ function CropCard({ crop }) {
         <div className="flex items-center gap-1.5 text-xs text-white/35 font-medium">
           <MapPin className="w-3 h-3 text-red-400 shrink-0" /> {crop.village}, {crop.district}
         </div>
+        {/* Show mandi if available */}
+        {crop.preferredCenter && (
+          <div className="flex items-center gap-1.5 text-xs text-amber-400/60 font-medium">
+            <Building2 className="w-3 h-3 shrink-0" /> {crop.preferredCenter}
+          </div>
+        )}
       </div>
     </div>
   );

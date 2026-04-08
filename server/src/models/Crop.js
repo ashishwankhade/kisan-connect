@@ -8,7 +8,7 @@ const cropSchema = mongoose.Schema(
       ref: 'User',
       required: true,
     },
-    
+
     // --- Step 1: Crop Details ---
     cropType: { type: String, required: true },
     variety: { type: String },
@@ -25,21 +25,27 @@ const cropSchema = mongoose.Schema(
     state: { type: String, required: true },
     gpsCoordinates: { type: String, required: true },
     cropImage: { type: String, required: true }, // Cloudinary URL
-    landDocument: { type: String }, // Optional Cloudinary URL (7/12 doc)
+    landDocument: { type: String },              // Optional Cloudinary URL (7/12 doc)
 
     // --- Step 3: Yield & Sales ---
     expectedYield: { type: Number, required: true }, // in quintals
     sellToGovt: { type: Boolean, default: false },
     sellingQuantity: { type: Number },
-    preferredCenter: { type: String },
+    preferredCenter: { type: String },  // Free-text mandi name entered by farmer
     sellingPeriod: { type: String },
-    
+
+    // --- Step 3: Bank Details (for MSP payment transfer) ---
+    bankAccountName:   { type: String },
+    bankAccountNumber: { type: String },
+    bankIFSC:          { type: String },
+    bankName:          { type: String },
+
     // System Status
     verificationStatus: {
       type: String,
       enum: ['Pending', 'Verified', 'Rejected'],
       default: 'Pending',
-    }
+    },
   },
   {
     timestamps: true,

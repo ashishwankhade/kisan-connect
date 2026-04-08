@@ -28,9 +28,20 @@ export const registerCrop = async (req, res) => {
       cropType, variety, season, sowingDate, expectedHarvestDate, area,
       soilType, irrigationType, village, district, state, gpsCoordinates,
       expectedYield, sellToGovt, sellingQuantity, preferredCenter, sellingPeriod,
+      // Bank details for MSP payment
+      bankAccountName, bankAccountNumber, bankIFSC, bankName,
     } = req.body;
 
-    // 3. Create the crop record
+    // 3. Validate bank details are provided when farmer opts to sell to govt
+    if (sellToGovt === 'true') {
+      if (!bankAccountName || !bankAccountNumber || !bankIFSC || !bankName) {
+        return res.status(400).json({
+          message: 'Bank account details are required when opting to sell to government at MSP.',
+        });
+      }
+    }
+
+    // 4. Create the crop record
     const crop = await Crop.create({
       farmer: req.user.id,
       cropType, variety, season, sowingDate, expectedHarvestDate, area,
@@ -38,17 +49,22 @@ export const registerCrop = async (req, res) => {
       expectedYield,
       sellToGovt: sellToGovt === 'true',
       sellingQuantity,
-      preferredCenter,
+      preferredCenter,   // Free-text mandi entered by farmer
       sellingPeriod,
       cropImage: cropImageUrl,
       landDocument: landDocUrl,
+      // Bank details
+      bankAccountName:   bankAccountName   || null,
+      bankAccountNumber: bankAccountNumber || null,
+      bankIFSC:          bankIFSC          || null,
+      bankName:          bankName          || null,
     });
 
     // FIX: Fetch the full farmer record to guarantee phone/name are available.
     // req.user may not have all fields depending on what the protect middleware selects.
     const farmer = await User.findById(req.user.id).select('name phone');
 
-    // 4. 📲 Notify FARMER — crop registered, pending verification
+    // 5. 📲 Notify FARMER — crop registered, pending verification
     //    Template: crop_registered
     //    "Hi {{farmerName}}! Your crop '{{cropType}}' has been registered. Our team will verify it shortly."
     if (farmer?.phone) {

@@ -13,7 +13,6 @@ export const getDashboardStats = async (req, res) => {
   try {
     const totalFarmers = await User.countDocuments({ role: { $ne: 'admin' } });
     const totalCrops = await Crop.countDocuments();
-    // FIX: Use verificationStatus consistently (not 'status')
     const pendingCrops = await Crop.countDocuments({ verificationStatus: 'Pending' });
 
     const procurementStats = await Crop.aggregate([
@@ -57,8 +56,6 @@ export const verifyCrop = async (req, res) => {
       return res.status(400).json({ message: 'Invalid status. Must be Verified or Rejected.' });
     }
 
-    // FIX: Use verificationStatus (not 'status') — consistent with getDashboardStats
-    // and the Crop model's field naming used throughout the admin layer.
     const crop = await Crop.findByIdAndUpdate(
       req.params.id,
       { verificationStatus: status },
@@ -87,12 +84,29 @@ export const verifyCrop = async (req, res) => {
 // ============================================================
 // @desc    Get all crops marked for Government Procurement
 // @route   GET /api/admin/procurement
+//
+// NOTE: Bank detail fields (bankAccountName, bankAccountNumber,
+// bankIFSC, bankName) are now included in the Crop model so
+// the admin/payment team can initiate MSP transfers directly
+// from this list. These fields are only populated when the
+// farmer opted sellToGovt = true during registration.
+// The preferredCenter field is now a free-text string (farmer
+// types their own mandi name) — no enum validation applies.
 // ============================================================
 export const getProcurementList = async (req, res) => {
   try {
     const procurementCrops = await Crop.find({ sellToGovt: true })
       .populate('farmer', 'name phone district')
+      // Explicitly select bank fields so they are always returned
+      // even if a future schema change sets select:false on them.
+      .select(
+        'farmer cropType variety season area expectedYield sellingQuantity ' +
+        'preferredCenter sellingPeriod verificationStatus village district state ' +
+        'bankAccountName bankAccountNumber bankIFSC bankName ' +
+        'cropImage landDocument gpsCoordinates createdAt'
+      )
       .sort({ sellingPeriod: 1 });
+
     res.json(procurementCrops);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -102,8 +116,6 @@ export const getProcurementList = async (req, res) => {
 // ============================================================
 // @desc    Get all Farmers (non-admin users)
 // @route   GET /api/admin/farmers
-// FIX: Added pagination to prevent full-collection scans as
-// the user base grows. Use ?page=1&limit=20 in the request.
 // ============================================================
 export const getAllFarmers = async (req, res) => {
   try {
@@ -141,8 +153,7 @@ export const getAllFarmers = async (req, res) => {
 export const getMarketplaceData = async (req, res) => {
   try {
     const lands = await Land.find({}).populate('owner', 'name phone').sort({ createdAt: -1 });
-    // FIX: Equipment uses 'user' as the owner ref field (different from Land's 'owner').
-    // Documented here explicitly so future devs don't get surprised.
+    // Equipment uses 'user' as the owner ref field (different from Land's 'owner').
     const equipment = await Equipment.find({}).populate('user', 'name phone').sort({ createdAt: -1 });
     res.json({ lands, equipment });
   } catch (error) {
@@ -153,8 +164,6 @@ export const getMarketplaceData = async (req, res) => {
 // ============================================================
 // @desc    Marketplace: Delete a Land or Equipment listing
 // @route   DELETE /api/admin/marketplace/:type/:id
-// FIX: Now also cancels any pending Requests for the deleted
-// item so they don't become orphan documents.
 // ============================================================
 export const deleteMarketplaceItem = async (req, res) => {
   try {
@@ -164,7 +173,6 @@ export const deleteMarketplaceItem = async (req, res) => {
       const land = await Land.findByIdAndDelete(id);
       if (!land) return res.status(404).json({ message: 'Land not found' });
 
-      // Cancel all pending requests for this land
       await Request.updateMany(
         { land: id, status: 'Pending' },
         { status: 'Rejected' }
@@ -174,7 +182,6 @@ export const deleteMarketplaceItem = async (req, res) => {
       const equipment = await Equipment.findByIdAndDelete(id);
       if (!equipment) return res.status(404).json({ message: 'Equipment not found' });
 
-      // Cancel all pending requests for this equipment
       await Request.updateMany(
         { equipment: id, status: 'Pending' },
         { status: 'Rejected' }

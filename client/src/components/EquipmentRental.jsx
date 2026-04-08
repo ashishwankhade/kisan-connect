@@ -11,7 +11,7 @@ import BookEquipmentModal from "./BookEquipmentModal";
 
 // FIX: consistent auth check — align the key with whatever your login
 // flow stores. See note in LandRenting.jsx.
-const isLoggedIn = () => !!localStorage.getItem("userToken");
+const isLoggedIn = () => !!localStorage.getItem("token");
 
 const EMPTY_FORM = {
   name: "", category: "", power: "", fuel: "Diesel",

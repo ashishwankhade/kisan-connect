@@ -3,20 +3,19 @@ import api from "../../api/axios";
 import {
   CheckCircle, XCircle, Eye, Loader2, MapPin,
   Search, X, AlertTriangle, RefreshCw, Landmark, Building2,
+  Info,
 } from "lucide-react";
 
 // ── Backend alignment notes ──────────────────────────────────────────
 // Route:  GET  /api/crops                       → getAllCrops (admin)
 // Route:  PUT  /api/admin/crops/:id/verify      { status: 'Verified'|'Rejected' }
 //
-// Latest model changes reflected here:
-//   • preferredCenter  — free-text string (farmer types mandi name)
-//   • bankAccountName  — account holder name
-//   • bankAccountNumber— account number
-//   • bankIFSC         — IFSC code (uppercase, 11 chars)
-//   • bankName         — bank name
-// Bank details are shown in the "Govt. Sale" column so the admin
-// payment team can initiate MSP transfers without switching screens.
+// Bank fields (bankAccountName, bankAccountNumber, bankIFSC, bankName)
+// live on the Crop document itself — populated by getAllCrops automatically
+// since no select:false is set on those schema fields.
+//
+// "Missing" is shown ONLY when sellToGovt=true AND all 4 bank fields are absent.
+// If the farmer didn't opt for govt sale, the bank column shows "—".
 // ─────────────────────────────────────────────────────────────────────
 
 const STATUS_TABS = ["All", "Pending", "Verified", "Rejected"];
@@ -27,6 +26,15 @@ const STATUS_STYLE = {
   Pending:  "bg-orange-100 text-orange-700 border-orange-200",
 };
 
+// Helper: returns true only when ALL four bank fields are genuinely missing/empty
+const hasBankDetails = (crop) =>
+  !!(
+    crop.bankAccountName?.trim() ||
+    crop.bankAccountNumber?.trim() ||
+    crop.bankIFSC?.trim() ||
+    crop.bankName?.trim()
+  );
+
 export default function CropVerification() {
   const [crops, setCrops]         = useState([]);
   const [loading, setLoading]     = useState(true);
@@ -36,7 +44,6 @@ export default function CropVerification() {
   const [confirm, setConfirm]     = useState(null); // { cropId, status } | null
   const [verifying, setVerifying] = useState(null); // cropId being verified
   const [toast, setToast]         = useState(null);
-  // Which crop row has the bank details panel expanded
   const [expandedBank, setExpandedBank] = useState(null);
   const toastTimer = useRef(null);
 
@@ -107,8 +114,8 @@ export default function CropVerification() {
       c.farmer?.name?.toLowerCase().includes(q) ||
       c.district?.toLowerCase().includes(q) ||
       c.village?.toLowerCase().includes(q) ||
-      c.preferredCenter?.toLowerCase().includes(q) ||   // mandi search
-      c.bankName?.toLowerCase().includes(q);             // bank search
+      c.preferredCenter?.toLowerCase().includes(q) ||
+      c.bankName?.toLowerCase().includes(q);
     return matchesTab && matchesSearch;
   });
 
@@ -347,14 +354,13 @@ export default function CropVerification() {
                         </p>
                       </td>
 
-                      {/* Govt. Sale & Mandi — free-text mandi shown as typed by farmer */}
+                      {/* Govt. Sale & Mandi */}
                       <td className="px-5 py-4">
                         {crop.sellToGovt ? (
                           <div className="space-y-1">
                             <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide px-2 py-1 bg-green-50 text-green-700 rounded-lg border border-green-100">
                               ✓ Yes · {crop.sellingQuantity} Qtl
                             </span>
-                            {/* Free-text mandi name */}
                             {crop.preferredCenter && (
                               <p className="flex items-center gap-1 text-xs text-slate-600 font-medium">
                                 <Building2 className="w-3 h-3 text-amber-500 shrink-0" />
@@ -372,9 +378,14 @@ export default function CropVerification() {
                         )}
                       </td>
 
-                      {/* Bank Details — expandable panel */}
+                      {/* ── Bank Details column — fixed logic ── */}
                       <td className="px-5 py-4">
-                        {crop.sellToGovt && crop.bankAccountNumber ? (
+                        {/* Case 1: Not selling to govt → show neutral dash */}
+                        {!crop.sellToGovt ? (
+                          <span className="text-xs text-slate-300">—</span>
+
+                        /* Case 2: Selling to govt AND bank details exist */
+                        ) : hasBankDetails(crop) ? (
                           <div>
                             <button
                               onClick={() =>
@@ -388,23 +399,34 @@ export default function CropVerification() {
                               {expandedBank === crop._id ? "Hide" : "View"} Bank
                             </button>
 
-                            {/* Expanded bank info panel */}
                             {expandedBank === crop._id && (
                               <div className="mt-2 p-3 rounded-xl bg-indigo-50 border border-indigo-100 space-y-1.5 min-w-[220px]">
                                 <BankRow label="Name"   val={crop.bankAccountName} />
                                 <BankRow label="A/C No" val={crop.bankAccountNumber} mono />
                                 <BankRow label="IFSC"   val={crop.bankIFSC} mono />
                                 <BankRow label="Bank"   val={crop.bankName} />
+                                {/* MSP price policy note for admin */}
+                                <div className="mt-2 pt-2 border-t border-indigo-200 flex items-start gap-1.5">
+                                  <Info className="w-3 h-3 text-indigo-400 shrink-0 mt-px" />
+                                  <p className="text-[10px] text-indigo-500 leading-relaxed">
+                                    MSP rates may vary by state government policy. Verify the applicable rate for{" "}
+                                    <span className="font-bold">{crop.state || crop.district}</span> before initiating transfer.
+                                  </p>
+                                </div>
                               </div>
                             )}
                           </div>
-                        ) : crop.sellToGovt ? (
-                          /* Farmer opted to sell but didn't provide bank details — flag it */
-                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-orange-600 bg-orange-50 px-2 py-1 rounded-lg border border-orange-100">
-                            ⚠ Missing
-                          </span>
+
+                        /* Case 3: Selling to govt BUT bank details missing */
                         ) : (
-                          <span className="text-xs text-slate-300">—</span>
+                          <div className="space-y-1">
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-orange-600 bg-orange-50 px-2 py-1 rounded-lg border border-orange-100">
+                              ⚠ Bank Details Missing
+                            </span>
+                            <p className="text-[10px] text-slate-400 max-w-[160px] whitespace-normal leading-relaxed">
+                              Farmer opted for govt. sale but did not provide bank info. Contact them before initiating MSP payment.
+                            </p>
+                          </div>
                         )}
                       </td>
 
@@ -481,7 +503,6 @@ export default function CropVerification() {
   );
 }
 
-/* ── Small helper: single row inside the bank details panel ── */
 function BankRow({ label, val, mono = false }) {
   return (
     <div className="flex items-start gap-2">

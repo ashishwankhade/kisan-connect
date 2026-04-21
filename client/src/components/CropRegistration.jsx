@@ -4,7 +4,7 @@ import {
   Sprout, Calendar, MapPin, Ruler, Droplets, Layers,
   ChevronLeft, Navigation, Save, Loader2, Camera,
   FileText, Tractor, ArrowRight, CheckCircle, X, Plus, Clock,
-  Wheat, Wind, Sun, CloudRain, Landmark, CreditCard, Hash, Building2,
+  Wheat, Wind, Sun, CloudRain, Landmark, CreditCard, Hash, Building2,Info
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
@@ -668,85 +668,122 @@ export default function CropRegistration({ setView }) {
                         )}
                       </div>
 
-                      {/* ── BANK DETAILS CARD ── */}
-                      <FormCard title="Bank Account for Payment" icon="🏦" subtitle={formData.sellToGovt ? "Required for MSP transfer" : "Optional"}>
-                        {/* Info banner */}
-                        <div className="flex items-start gap-3 rounded-xl bg-amber-500/10 border border-amber-500/20 px-4 py-3 mb-4">
-                          <Landmark className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                          <p className="text-[11px] text-amber-300/80 leading-relaxed">
-                            Your payment for crop sale will be transferred directly to this account after verification. Details are securely stored and only used for MSP disbursement.
-                          </p>
-                        </div>
+// ─────────────────────────────────────────────────────────────────────────────
+// DROP-IN REPLACEMENT for the "Bank Account for Payment" FormCard in Step 3
+// of CropRegistration.jsx  (search for `title="Bank Account for Payment"`)
+//
+// Changes vs original:
+//   1. Added MSP price-variation note banner below the existing info banner.
+//   2. Everything else (field layout, validation, icons) is identical.
+// ─────────────────────────────────────────────────────────────────────────────
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          {/* Account Holder Name */}
-                          <div className="sm:col-span-2">
-                            <Label>Account Holder Name</Label>
-                            <div className="relative">
-                              <input
-                                name="bankAccountName"
-                                value={formData.bankAccountName}
-                                onChange={handleChange}
-                                placeholder="As printed on your passbook"
-                                className="w-full h-11 rounded-xl border border-white/20 bg-white/10 pl-10 pr-3 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-white/30"
-                                required={formData.sellToGovt}
-                              />
-                              <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/25" />
-                            </div>
-                          </div>
+{/* ── BANK DETAILS CARD ── */}
+<FormCard
+  title="Bank Account for Payment"
+  icon="🏦"
+  subtitle={formData.sellToGovt ? "Required for MSP transfer" : "Optional"}
+>
+  {/* ── Existing security info banner ── */}
+  <div className="flex items-start gap-3 rounded-xl bg-amber-500/10 border border-amber-500/20 px-4 py-3 mb-3">
+    <Landmark className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+    <p className="text-[11px] text-amber-300/80 leading-relaxed">
+      Your payment for crop sale will be transferred directly to this account
+      after verification. Details are securely stored and only used for MSP
+      disbursement.
+    </p>
+  </div>
 
-                          {/* Account Number */}
-                          <div>
-                            <Label>Account Number</Label>
-                            <div className="relative">
-                              <input
-                                name="bankAccountNumber"
-                                value={formData.bankAccountNumber}
-                                onChange={handleChange}
-                                placeholder="e.g. 1234567890"
-                                inputMode="numeric"
-                                className="w-full h-11 rounded-xl border border-white/20 bg-white/10 pl-10 pr-3 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-white/30 tracking-widest font-mono"
-                                required={formData.sellToGovt}
-                              />
-                              <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/25" />
-                            </div>
-                          </div>
+  {/* ── NEW: MSP price-variation notice ── */}
+  <div className="flex items-start gap-3 rounded-xl bg-blue-500/10 border border-blue-400/20 px-4 py-3 mb-4">
+    {/* Using the Info icon — make sure it's imported from lucide-react */}
+    <Info className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
+    <div>
+      <p className="text-[11px] font-bold text-blue-300 mb-0.5 uppercase tracking-wide">
+        Note — MSP Rates Vary by State
+      </p>
+      <p className="text-[11px] text-blue-300/70 leading-relaxed">
+        Crop prices under the Minimum Support Price (MSP) scheme may differ
+        across states based on individual state government policies, bonuses,
+        and procurement seasons. The final amount credited to your account will
+        be as per the rate applicable in your state at the time of procurement.
+        For exact rates, contact your nearest APMC or Agriculture Department.
+      </p>
+    </div>
+  </div>
 
-                          {/* IFSC Code */}
-                          <div>
-                            <Label>IFSC Code</Label>
-                            <div className="relative">
-                              <input
-                                name="bankIFSC"
-                                value={formData.bankIFSC}
-                                onChange={(e) => setFormData(p => ({ ...p, bankIFSC: e.target.value.toUpperCase() }))}
-                                placeholder="e.g. SBIN0001234"
-                                maxLength={11}
-                                className="w-full h-11 rounded-xl border border-white/20 bg-white/10 pl-10 pr-3 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-white/30 uppercase tracking-widest font-mono"
-                                required={formData.sellToGovt}
-                              />
-                              <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/25" />
-                            </div>
-                            <p className="text-[10px] text-white/25 mt-1.5 pl-1">11-character code on your cheque book</p>
-                          </div>
+  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    {/* Account Holder Name */}
+    <div className="sm:col-span-2">
+      <Label>Account Holder Name</Label>
+      <div className="relative">
+        <input
+          name="bankAccountName"
+          value={formData.bankAccountName}
+          onChange={handleChange}
+          placeholder="As printed on your passbook"
+          className="w-full h-11 rounded-xl border border-white/20 bg-white/10 pl-10 pr-3 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-white/30"
+          required={formData.sellToGovt}
+        />
+        <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/25" />
+      </div>
+    </div>
 
-                          {/* Bank Name */}
-                          <div className="sm:col-span-2">
-                            <Label>Bank Name</Label>
-                            <div className="relative">
-                              <input
-                                name="bankName"
-                                value={formData.bankName}
-                                onChange={handleChange}
-                                placeholder="e.g. State Bank of India"
-                                className="w-full h-11 rounded-xl border border-white/20 bg-white/10 pl-10 pr-3 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-white/30"
-                                required={formData.sellToGovt}
-                              />
-                              <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/25" />
-                            </div>
-                          </div>
-                        </div>
-                      </FormCard>
+    {/* Account Number */}
+    <div>
+      <Label>Account Number</Label>
+      <div className="relative">
+        <input
+          name="bankAccountNumber"
+          value={formData.bankAccountNumber}
+          onChange={handleChange}
+          placeholder="e.g. 1234567890"
+          inputMode="numeric"
+          className="w-full h-11 rounded-xl border border-white/20 bg-white/10 pl-10 pr-3 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-white/30 tracking-widest font-mono"
+          required={formData.sellToGovt}
+        />
+        <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/25" />
+      </div>
+    </div>
+
+    {/* IFSC Code */}
+    <div>
+      <Label>IFSC Code</Label>
+      <div className="relative">
+        <input
+          name="bankIFSC"
+          value={formData.bankIFSC}
+          onChange={(e) =>
+            setFormData((p) => ({ ...p, bankIFSC: e.target.value.toUpperCase() }))
+          }
+          placeholder="e.g. SBIN0001234"
+          maxLength={11}
+          className="w-full h-11 rounded-xl border border-white/20 bg-white/10 pl-10 pr-3 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-white/30 uppercase tracking-widest font-mono"
+          required={formData.sellToGovt}
+        />
+        <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/25" />
+      </div>
+      <p className="text-[10px] text-white/25 mt-1.5 pl-1">
+        11-character code on your cheque book
+      </p>
+    </div>
+
+    {/* Bank Name */}
+    <div className="sm:col-span-2">
+      <Label>Bank Name</Label>
+      <div className="relative">
+        <input
+          name="bankName"
+          value={formData.bankName}
+          onChange={handleChange}
+          placeholder="e.g. State Bank of India"
+          className="w-full h-11 rounded-xl border border-white/20 bg-white/10 pl-10 pr-3 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-white/30"
+          required={formData.sellToGovt}
+        />
+        <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/25" />
+      </div>
+    </div>
+  </div>
+</FormCard>
 
                     </div>
                   )}

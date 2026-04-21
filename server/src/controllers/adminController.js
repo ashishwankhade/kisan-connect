@@ -65,8 +65,6 @@ export const verifyCrop = async (req, res) => {
     if (!crop) return res.status(404).json({ message: 'Crop not found' });
 
     // 📲 Notify FARMER: crop verification result
-    //    Template: crop_verified
-    //    "Hi {{farmerName}}! Your crop '{{cropType}}' has been {{status}} by the AgriSmart team."
     if (crop.farmer?.phone) {
       await sendWhatsAppMessage(
         crop.farmer.phone,
@@ -85,29 +83,52 @@ export const verifyCrop = async (req, res) => {
 // @desc    Get all crops marked for Government Procurement
 // @route   GET /api/admin/procurement
 //
-// NOTE: Bank detail fields (bankAccountName, bankAccountNumber,
-// bankIFSC, bankName) are now included in the Crop model so
-// the admin/payment team can initiate MSP transfers directly
-// from this list. These fields are only populated when the
-// farmer opted sellToGovt = true during registration.
-// The preferredCenter field is now a free-text string (farmer
-// types their own mandi name) — no enum validation applies.
+// FIX: Removed the `.select()` string that was conflicting with
+// `.populate()`. Mongoose merges field projection with populate
+// internally — using both an explicit select() AND populate()
+// for the same query can silently drop populated subdoc fields
+// in some Mongoose versions. Since NO schema field has
+// `select: false`, omitting `.select()` returns all fields
+// including the four bank fields, which is what we want.
+//
+// If you ever need to restrict fields here in future, use a
+// lean projection object passed as the third arg to find():
+//   Crop.find(filter, { password: 0 })  // exclude only
+// rather than chaining .select() after .populate().
 // ============================================================
 export const getProcurementList = async (req, res) => {
   try {
     const procurementCrops = await Crop.find({ sellToGovt: true })
       .populate('farmer', 'name phone district')
-      // Explicitly select bank fields so they are always returned
-      // even if a future schema change sets select:false on them.
-      .select(
-        'farmer cropType variety season area expectedYield sellingQuantity ' +
-        'preferredCenter sellingPeriod verificationStatus village district state ' +
-        'bankAccountName bankAccountNumber bankIFSC bankName ' +
-        'cropImage landDocument gpsCoordinates createdAt'
-      )
-      .sort({ sellingPeriod: 1 });
+      .sort({ sellingPeriod: 1 })
+      .lean(); // lean() returns plain JS objects — faster, and avoids
+               // any Mongoose getter that might strip unlisted fields.
 
     res.json(procurementCrops);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// ============================================================
+// @desc    Get ALL crops (Admin / Government Dashboard)
+// @route   GET /api/crops   ← used by CropVerification.jsx
+//
+// FIX: Added .lean() for consistent field inclusion.
+// Bank fields (bankAccountName, bankAccountNumber, bankIFSC,
+// bankName) are stored on the Crop document and have no
+// `select: false` in the schema, so they are returned as-is.
+// The frontend hasBankDetails() helper now checks all four
+// fields with .trim() so empty-string values don't falsely
+// show the bank panel.
+// ============================================================
+export const getAllCrops = async (req, res) => {
+  try {
+    const crops = await Crop.find({})
+      .populate('farmer', 'name phone district')
+      .sort({ createdAt: -1 })
+      .lean();
+    res.json(crops);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -153,7 +174,6 @@ export const getAllFarmers = async (req, res) => {
 export const getMarketplaceData = async (req, res) => {
   try {
     const lands = await Land.find({}).populate('owner', 'name phone').sort({ createdAt: -1 });
-    // Equipment uses 'user' as the owner ref field (different from Land's 'owner').
     const equipment = await Equipment.find({}).populate('user', 'name phone').sort({ createdAt: -1 });
     res.json({ lands, equipment });
   } catch (error) {
